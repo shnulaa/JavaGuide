@@ -64,35 +64,52 @@
         },
         // 新增：在 Markdown 内容渲染到页面后执行的钩子，用于尝试处理图片防盗链
         doneEach: function(html, next) {
-          // Docsify 将 Markdown 内容渲染到的主要区域通常是 id="main"。
-          // 为了更稳妥，我们先尝试选择 #main，如果不存在，再选择 #app。
-          const contentContainer = document.querySelector('#main') || document.querySelector('#app');
+    console.log('[Docsify Hook] doneEach triggered.'); // 检查钩子是否执行
 
-          if (contentContainer) {
-            // 目标图片域名，根据您之前提到的 `https://oss.javaguide.cn/xingqiu/xingqiu.png`
-            // 我们这里针对所有来自 `oss.javaguide.cn` 的图片进行处理。
-            // 如果您有其他域名的图片也遇到此问题，可以类似地添加或修改选择器。
-            const imagesToProcess = contentContainer.querySelectorAll('img[src^="https://oss.javaguide.cn/"]');
-            
-            imagesToProcess.forEach(function(img) {
-              // 设置 referrerpolicy 为 "no-referrer"
-              // 这会阻止浏览器在请求该图片时发送 Referer HTTP 头部
-              img.setAttribute('referrerpolicy', 'no-referrer');
-              
-              // 可选：添加错误处理，以便在图片仍然加载失败时在控制台给出提示
-              img.onerror = function() {
-                console.warn('图片加载失败 (已尝试 referrerpolicy="no-referrer"):', img.src);
-                // 您可以在这里设置一个备用图片，或者隐藏该图片，或者添加一个提示边框等
-                // img.style.border = '2px dashed red';
-                // img.alt = '图片加载失败';
-              };
-            });
-          }
-          
-          // 必须调用 next 将处理后的 HTML（或者原始 HTML）传递给下一步
-          next(html);
-        },
-        plugins: [
+    // 尝试更精确地定位 Docsify 的内容区域
+    // Docsify 通常将内容渲染到 <main> 标签或 id="main" 的 div 中，
+    // 或者在某些旧版本或特定配置下是 #app 内部的 .content 区域。
+    let contentContainer = document.querySelector('main.content');
+    if (!contentContainer) {
+      contentContainer = document.getElementById('main');
+    }
+    if (!contentContainer) {
+      contentContainer = document.querySelector('#app .content'); // 备选方案
+    }
+    if (!contentContainer && document.querySelector('#app')) { // 如果以上都找不到，但#app存在，则直接用#app
+        contentContainer = document.querySelector('#app');
+    }
+
+    console.log('[Docsify Hook] Content container selected:', contentContainer); // 检查容器是否被选中
+
+    if (contentContainer) {
+      const imagesToProcess = contentContainer.querySelectorAll('img[src^="https://oss.javaguide.cn/"]');
+      console.log('[Docsify Hook] Images found with src starting "https://oss.javaguide.cn/":', imagesToProcess.length, imagesToProcess); // 检查选中的图片数量和列表
+
+      if (imagesToProcess.length === 0) {
+        console.warn('[Docsify Hook] No images found matching the selector. Check the src attribute and the selector logic.');
+        // 可以尝试更宽松的选择器进行测试，例如仅 'img'
+        // const allImages = contentContainer.querySelectorAll('img');
+        // console.log('[Docsify Hook] All images in container:', allImages.length, allImages);
+      }
+
+      imagesToProcess.forEach(function(img, index) {
+        console.log(`[Docsify Hook] Processing image ${index + 1}:`, img.src); // 检查正在处理的图片
+        img.setAttribute('referrerpolicy', 'no-referrer');
+        // 立即检查属性是否设置成功
+        console.log(`[Docsify Hook] referrerpolicy attribute for image ${index + 1} set to:`, img.getAttribute('referrerpolicy'));
+
+        img.onerror = function() {
+          console.warn('[Docsify Hook] Image failed to load (even with referrerpolicy="no-referrer"):', img.src);
+        };
+      });
+    } else {
+      console.warn('[Docsify Hook] Content container not found. The script cannot find where Docsify renders its content.');
+    }
+    
+    next(html);
+  },
+  plugins: [
           EditOnGithubPlugin.create(
             "https://github.com/Snailclimb/JavaGuide/blob/master/"
           ),
