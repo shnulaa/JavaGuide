@@ -1,140 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>JavaGuide</title>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Docsify 最小化测试</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="description" content="Description" />
-    <meta
-      name="viewport"
-      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
-    />
-    <!--主题-->
-    <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css" />
-  </head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css">
+</head>
+<body>
+    <div id="app">正在加载 Docsify...</div>
 
-  <body>
-    <nav>
-      <!-- 修正了原始 URL 中的拼写错误 hhttps -> https -->
-      <a href="https://javaguide.cn/zhuanlan/java-mian-shi-zhi-bei.html"
-      >Java面试指北</a>
-      <a href="https://javaguide.cn/about-the-author/zhishixingqiu-two-years.html"
-        >知识星球</a
-      >
-    </nav>
-    <div id="app"></div>
-    <!-- docsify-edit-on-github -->
-    <script src="//unpkg.com/docsify-edit-on-github/index.js"></script>
     <script>
-      // 离线支持
-      if (typeof navigator.serviceWorker !== "undefined") {
-        navigator.serviceWorker.register("sw.js");
-      }
-      window.$docsify = {
-        name: "JavaGuide",
-        repo: "https://github.com/Snailclimb/JavaGuide",
-        maxLevel: 4, //最大支持渲染的标题层级
-        //coverpage: true,
-        auto2top: true, //切换页面后是否自动跳转到页面顶部
-        //ga: 'UA-138586553-1',
-        //logo: 'https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-3logo-透明.png' ,
-        search: {
-          //maxAge: 86400000, // 过期时间，单位毫秒，默认一天
-          paths: "auto",
-          placeholder: "搜索",
-          noData: "找不到结果",
-          // 搜索标题的最大程级, 1 - 6
-          depth: 3,
-        },
-        // 备案
-        beian: {
-          ICP: "鄂ICP备2020015769号",
-          NISMSP: {
-            number: "",
-            url: "",
-            id: "",
-          },
-        },
-        // 字数统计
-        count: {
-          countable: true,
-          fontsize: "0.9em",
-          color: "rgb(90,90,90)",
-          language: "chinese",
-        },
-        // 新增：在 Markdown 内容渲染到页面后执行的钩子，用于尝试处理图片防盗链
-        doneEach: function(html, next) {
-    console.log('[Docsify Hook] doneEach triggered.'); // 检查钩子是否执行
+        console.log('[MINIMAL TEST] window.$docsify 配置脚本块开始执行。');
 
-    // 尝试更精确地定位 Docsify 的内容区域
-    // Docsify 通常将内容渲染到 <main> 标签或 id="main" 的 div 中，
-    // 或者在某些旧版本或特定配置下是 #app 内部的 .content 区域。
-    let contentContainer = document.querySelector('main.content');
-    if (!contentContainer) {
-      contentContainer = document.getElementById('main');
-    }
-    if (!contentContainer) {
-      contentContainer = document.querySelector('#app .content'); // 备选方案
-    }
-    if (!contentContainer && document.querySelector('#app')) { // 如果以上都找不到，但#app存在，则直接用#app
-        contentContainer = document.querySelector('#app');
-    }
+        // 暂时注释掉 Service Worker，以排除其潜在干扰
+        // if (typeof navigator.serviceWorker !== "undefined") {
+        //   navigator.serviceWorker.register("sw.js");
+        // }
 
-    console.log('[Docsify Hook] Content container selected:', contentContainer); // 检查容器是否被选中
+        window.$docsify = {
+            name: '最小化测试文档',
+            // el: '#app', // Docsify 自动查找 #app
 
-    if (contentContainer) {
-      const imagesToProcess = contentContainer.querySelectorAll('img[src^="https://oss.javaguide.cn/"]');
-      console.log('[Docsify Hook] Images found with src starting "https://oss.javaguide.cn/":', imagesToProcess.length, imagesToProcess); // 检查选中的图片数量和列表
-
-      if (imagesToProcess.length === 0) {
-        console.warn('[Docsify Hook] No images found matching the selector. Check the src attribute and the selector logic.');
-        // 可以尝试更宽松的选择器进行测试，例如仅 'img'
-        // const allImages = contentContainer.querySelectorAll('img');
-        // console.log('[Docsify Hook] All images in container:', allImages.length, allImages);
-      }
-
-      imagesToProcess.forEach(function(img, index) {
-        console.log(`[Docsify Hook] Processing image ${index + 1}:`, img.src); // 检查正在处理的图片
-        img.setAttribute('referrerpolicy', 'no-referrer');
-        // 立即检查属性是否设置成功
-        console.log(`[Docsify Hook] referrerpolicy attribute for image ${index + 1} set to:`, img.getAttribute('referrerpolicy'));
-
-        img.onerror = function() {
-          console.warn('[Docsify Hook] Image failed to load (even with referrerpolicy="no-referrer"):', img.src);
+            // 唯一保留的钩子：doneEach
+            doneEach: function(html, next) {
+                console.log('[MINIMAL TEST] doneEach 钩子成功触发！');
+                // 在此阶段，我们甚至不尝试操作 DOM，只确认钩子是否被调用
+                next(html);
+            }
+            // 其他所有配置项（repo, maxLevel, search, beian, count, plugins等）全部移除
         };
-      });
-    } else {
-      console.warn('[Docsify Hook] Content container not found. The script cannot find where Docsify renders its content.');
-    }
-    
-    next(html);
-  },
-  // plugins: [
-  //         EditOnGithubPlugin.create(
-  //           "https://github.com/Snailclimb/JavaGuide/blob/master/"
-  //         ),
-  //         // 您原有的其他插件可以继续放在这里
-  //       ],
-      };
+
+        console.log('[MINIMAL TEST] window.$docsify 对象已定义完毕:', window.$docsify);
     </script>
+
+    <!-- Docsify 核心脚本，必须在 window.$docsify 定义之后加载 -->
     <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
-    <!--Java代码高亮-->
-    <script src="//unpkg.com/prismjs/components/prism-java.js"></script>
-    <!--全文搜索,直接用官方提供的无法生效-->
-    <script src="https://cdn.bootcss.com/docsify/4.5.9/plugins/search.min.js"></script>
-    <!--谷歌统计
-  <script src="//unpkg.com/docsify" data-ga="UA-138586553-1"></script>
-  <script src="//unpkg.com/docsify/lib/plugins/ga.js"></script>
-  -->
-    <!-- 复制到剪贴板 -->
-    <script src="//unpkg.com/docsify-copy-code"></script>
-    <!-- 图片缩放 -->
-    <script src="//unpkg.com/docsify/lib/plugins/zoom-image.js"></script>
-    <!-- 表情 -->
-    <script src="//unpkg.com/docsify/lib/plugins/emoji.js"></script>
-    <!-- 字数统计 -->
-    <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
-    <!-- 备案 -->
-    <script src="https://cdn.jsdelivr.net/npm/docsify-beian@latest/dist/beian.min.js"></script>
-  </body>
+
+    <!-- 确保所有其他插件脚本都已注释掉或移除，包括 emoji, search, copy-code, zoom-image, count, beian, edit-on-github 等 -->
+    <!-- 例如: <script src="//unpkg.com/docsify/lib/plugins/emoji.js"></script> -->
+
+</body>
 </html>
