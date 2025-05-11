@@ -8,29 +8,30 @@
     <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css">
 </head>
 <body>
-    <div id="app">正在加载 Docsify...</div>
+    <div id="docsify-app-container">页面正在努力加载中...</div> <!-- 修改了ID并添加了初始文本 -->
 
     <script>
-        console.log('[MINIMAL TEST] window.$docsify 配置脚本块开始执行。');
-
-        // 确保 Service Worker 注册代码确实被注释或删除了
-        // if (typeof navigator.serviceWorker !== "undefined") {
-        //   navigator.serviceWorker.register("sw.js");
-        // }
+        console.log('[MINIMAL TEST A] window.$docsify 配置脚本块开始执行。');
 
         window.$docsify = {
-            name: '最小化测试文档',
+            el: '#docsify-app-container', // 显式指定挂载元素
+            name: '最小化测试文档 A',
+            // homepage: 'README.md', // 可以显式指定首页文件，如果你的文件不叫 README.md
             doneEach: function(html, next) {
-                console.log('[MINIMAL TEST] doneEach 钩子成功触发！');
+                console.log('[MINIMAL TEST A] doneEach 钩子成功触发！ HTML content received.');
+                // 为了确认是否真的有内容被处理，可以打印一下html的开头部分
+                // console.log('[MINIMAL TEST A] HTML snippet:', String(html).substring(0, 100));
                 next(html);
+            },
+            // 新增一个 ready 钩子，看它是否会触发
+            ready: function() {
+                console.log('[MINIMAL TEST A] Docsify "ready" 钩子触发！');
             }
         };
 
-        console.log('[MINIMAL TEST] window.$docsify 对象已定义完毕:', window.$docsify);
+        console.log('[MINIMAL TEST A] window.$docsify 对象已定义完毕:', window.$docsify);
     </script>
 
     <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
-
-    <!-- 确认这里没有其他 script 标签 -->
 </body>
 </html>
