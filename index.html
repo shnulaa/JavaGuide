@@ -13,32 +13,24 @@
     <script>
         console.log('[MINIMAL TEST] window.$docsify 配置脚本块开始执行。');
 
-        // 暂时注释掉 Service Worker，以排除其潜在干扰
+        // 确保 Service Worker 注册代码确实被注释或删除了
         // if (typeof navigator.serviceWorker !== "undefined") {
         //   navigator.serviceWorker.register("sw.js");
         // }
 
         window.$docsify = {
             name: '最小化测试文档',
-            // el: '#app', // Docsify 自动查找 #app
-
-            // 唯一保留的钩子：doneEach
             doneEach: function(html, next) {
                 console.log('[MINIMAL TEST] doneEach 钩子成功触发！');
-                // 在此阶段，我们甚至不尝试操作 DOM，只确认钩子是否被调用
                 next(html);
             }
-            // 其他所有配置项（repo, maxLevel, search, beian, count, plugins等）全部移除
         };
 
         console.log('[MINIMAL TEST] window.$docsify 对象已定义完毕:', window.$docsify);
     </script>
 
-    <!-- Docsify 核心脚本，必须在 window.$docsify 定义之后加载 -->
     <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
 
-    <!-- 确保所有其他插件脚本都已注释掉或移除，包括 emoji, search, copy-code, zoom-image, count, beian, edit-on-github 等 -->
-    <!-- 例如: <script src="//unpkg.com/docsify/lib/plugins/emoji.js"></script> -->
-
+    <!-- 确认这里没有其他 script 标签 -->
 </body>
 </html>
