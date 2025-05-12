@@ -11,44 +11,37 @@
     />
     <!--主题-->
     <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css" />
-    <!-- 你也可以在这里添加自定义 CSS 来控制侧边栏折叠样式，或者使用 JS 动态添加 (如下面的插件所示) -->
+    <!-- CSS for Collapsible Sidebar -->
     <style>
-      /* CSS for Collapsible Sidebar */
-      /* Hide nested lists by default */
       .sidebar .sidebar-nav ul {
           display: none;
       }
-      /* Show nested lists when the parent LI has the 'expanded' class */
       .sidebar .sidebar-nav li.collapsible.expanded > ul {
           display: block;
       }
-      /* Optional: Style for collapsible items/links */
       .sidebar .sidebar-nav li.collapsible > a {
-           /* Needed if you add content like arrows */
-           position: relative; /* Allow positioning of pseudo-elements */
-           padding-right: 20px; /* Make space for the indicator */
-           cursor: pointer; /* Indicate it's clickable */
+           position: relative;
+           padding-right: 20px;
+           cursor: pointer;
       }
-      /* Optional: Add expand/collapse indicator (right arrow for collapsed, down arrow for expanded) */
        .sidebar .sidebar-nav li.collapsible > a::before {
-           content: '►'; /* Right arrow when collapsed */
+           content: '►';
            position: absolute;
-           right: 5px; /* Position relative to the link */
+           right: 5px;
            top: 50%;
            transform: translateY(-50%);
            font-size: 0.8em;
-           transition: transform 0.2s ease-in-out; /* Smooth transition for indicator */
+           transition: transform 0.2s ease-in-out;
        }
         .sidebar .sidebar-nav li.collapsible.expanded > a::before {
-           content: '▼'; /* Down arrow when expanded */
-           transform: translateY(-50%) rotate(0deg); /* No rotation needed for down arrow */
+           content: '▼';
+           transform: translateY(-50%) rotate(0deg);
         }
-        /* Ensure padding is consistent if some links don't have indicators */
          .sidebar .sidebar-nav a {
-             padding-right: 10px; /* Base padding for all links */
+             padding-right: 10px;
          }
          .sidebar .sidebar-nav li.collapsible > a {
-            padding-right: 20px; /* Override for collapsible links */
+            padding-right: 20px;
          }
     </style>
   </head>
@@ -63,7 +56,7 @@
     </nav>
     <div id="app"></div>
 
-    <!-- docsify-edit-on-github (需要放在 docsify 脚本之前，因为它修改的是 $docsify 配置) -->
+    <!-- docsify-edit-on-github -->
     <script src="//unpkg.com/docsify-edit-on-github/index.js"></script>
 
     <script>
@@ -75,21 +68,18 @@
       window.$docsify = {
         name: "JavaGuide",
         repo: "https://github.com/Snailclimb/JavaGuide",
-        maxLevel: 4, //最大支持渲染的标题层级
-        //封面,_coverpage.md
+        maxLevel: 4,
         //coverpage: true,
-        auto2top: true, //切换页面后是否自动跳转到页面顶部
+        auto2top: true,
         //ga: 'UA-138586553-1',
         //logo: 'https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-3logo-透明.png' ,
         search: {
-          //maxAge: 86400000, // 过期时间，单位毫秒，默认一天
+          //maxAge: 86400000,
           paths: "auto",
           placeholder: "搜索",
           noData: "找不到结果",
-          // 搜索标题的最大程级, 1 - 6
           depth: 3,
         },
-        // 备案
         beian: {
           ICP: "鄂ICP备2020015769号",
           NISMSP: {
@@ -98,7 +88,6 @@
             id: "",
           },
         },
-        // 字数统计
         count: {
           countable: true,
           fontsize: "0.9em",
@@ -106,16 +95,32 @@
           language: "chinese",
         },
 
-        // =========== Plugins Configuration ===========
         plugins: [
-          // 1. Existing EditOnGithubPlugin
           EditOnGithubPlugin.create(
             "https://github.com/Snailclimb/JavaGuide/blob/master/"
           ),
 
-          // 3. New Plugin to Add referrerpolicy="no-referrer" and Implement Collapsible Sidebar
           function (hook) {
-            // This part adds referrerpolicy="no-referrer" to all img tags
+            const targetOrigin = 'https://oss.javaguide.cn/';
+            const antiHotlinkParamKeyVal = 'x-oss-process=style/javaguide';
+
+            hook.afterEach(function (html, next) {
+              const imgRegex = new RegExp(`<img[^>]*src="(https?:\\/\\/oss\\.javaguide\\.cn\\/[^"]*)"[^>]*>`, 'gi');
+              let modifiedHtml = html.replace(imgRegex, function(match, srcUrl) {
+                if (srcUrl.includes(antiHotlinkParamKeyVal)) {
+                  return match;
+                }
+                const separator = srcUrl.includes('?') ? '&' : '?';
+                const newSrcUrl = srcUrl + separator + antiHotlinkParamKeyVal;
+                return match.replace(srcUrl, newSrcUrl);
+              });
+              next(modifiedHtml);
+            });
+          },
+
+          // --- Corrected Plugin to Add referrerpolicy and Implement Collapsible Sidebar ---
+          function (hook) {
+            // Add referrerpolicy="no-referrer"
             hook.afterEach(function (html, next) {
               const imgTagRegex = /<img[^>]*>/gi;
               let modifiedHtml = html.replace(imgTagRegex, function(match) {
@@ -127,107 +132,81 @@
               next(modifiedHtml);
             });
 
-            // This part implements the collapsible sidebar logic
-            // Use doneEach or ready hook to ensure sidebar DOM is available
-            hook.doneEach(function() { // Or hook.ready(function() { ... });
+            // Implement collapsible sidebar logic
+            hook.doneEach(function() {
               const sidebar = document.querySelector('.sidebar');
-              if (!sidebar) return; // Exit if sidebar element is not found
+              if (!sidebar) return;
 
-              // Find all LIs that contain a direct child UL (these are the parent items with nested menus)
-              // Use querySelector(':scope > ul') for checking direct children.
-              // Fallback for older browsers that don't support :scope (though uncommon now)
               const allLIs = sidebar.querySelectorAll('.sidebar-nav li');
               const collapsibleItems = [];
-               allLIs.forEach(li => {
-                   // Check if this LI contains a UL as a direct child
+
+              allLIs.forEach(li => {
                    if (li.querySelector(':scope > ul')) {
                        collapsibleItems.push(li);
                    }
-               });
-
-              // Process each potential collapsible item
-              collapsibleItems.forEach(li => {
-                li.classList.add('collapsible'); // Mark it with a class
-
-                // Find the direct link within this collapsible LI
-                const link = li.querySelector(':scope > a'); // Direct child link
-                if (link) {
-                    // Add click listener to the link
-                    link.addEventListener('click', function(event) {
-                        // Toggle the 'expanded' class on the parent LI (li is available via closure)
-                        li.classList.toggle('expanded');
-
-                        // --- IMPORTANT ---
-                        // Decide if clicking this link should *also* navigate to the page it links to.
-                        // - If this link represents a *category* title that doesn't have its own page,
-                        //   and clicking it should *only* toggle the submenu:
-                        //   event.preventDefault();
-                        // - If this link represents a *page* (e.g., an index page for the category),
-                        //   and clicking it should *both* toggle the submenu *and* navigate:
-                        //   Remove event.preventDefault(); // (Current state in the code)
-                        // --- End IMPORTANT ---
-
-                        // event.preventDefault(); // Uncomment this line if clicking should only toggle collapse
-
-                        // Stop event from bubbling up, preventing potential interference
-                        event.stopPropagation();
-                    });
-                }
-                 // Note: Adding click listener to the LI itself might be another approach,
-                 // but clicking the link within the LI is usually the intended interaction point.
-                 // Adding it to the link also allows using the link's default behavior if needed.
               });
 
-              // --- Handle initial expansion of the active path ---
-              // Find the currently active link in the sidebar
+              collapsibleItems.forEach(li => {
+                li.classList.add('collapsible');
+                const link = li.querySelector(':scope > a'); // Find the direct child link
+
+                // *** FIX: Check if the link element exists before adding event listener ***
+                if (link) {
+                    link.addEventListener('click', function(event) {
+                        // Toggle the 'expanded' class on the parent LI
+                        li.classList.toggle('expanded');
+
+                        // Uncomment the line below if clicking should ONLY toggle and NOT navigate
+                        // event.preventDefault();
+
+                        event.stopPropagation(); // Prevent parent listeners (if any) from firing
+                    });
+                } else {
+                     // Optional: Log a warning if a collapsible LI has no direct link
+                     // This might indicate an issue with your _sidebar.md structure
+                     console.warn("Collapsible LI found without a direct child link:", li);
+                     // You might want to add a click listener to the LI itself here as a fallback
+                     li.addEventListener('click', function(event) {
+                          li.classList.toggle('expanded');
+                           // Check if click target is not a link within this LI
+                           if (!event.target.closest('a')) {
+                              event.preventDefault(); // Prevent default if not clicking a link further down
+                           }
+                          event.stopPropagation();
+                     });
+                }
+                // --- End FIX ---
+              });
+
+              // Handle initial expansion of the active path
               const activeLink = sidebar.querySelector('.sidebar-nav .active');
               if (activeLink) {
-                  // Start from the LI containing the active link
                   let currentElement = activeLink.parentElement;
-                  // Traverse up the DOM tree towards the sidebar root
                   while (currentElement && currentElement !== sidebar) {
-                       // If the current element is an LI AND it has the 'collapsible' class
                       if (currentElement.tagName === 'LI' && currentElement.classList.contains('collapsible')) {
-                          currentElement.classList.add('expanded'); // Expand this parent collapsible LI
+                          currentElement.classList.add('expanded');
                       }
-                      // Move up to the next parent element
                       currentElement = currentElement.parentElement;
                   }
               }
-              // --- End initial expansion logic ---
             });
           }
-          // --- End Collapsible Sidebar Plugin ---
+          // --- End Corrected Plugin ---
         ],
-        // ===========================================
       };
     </script>
 
-    <!-- Main Docsify script (必须在配置脚本之后) -->
+    <!-- Main Docsify script -->
     <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
 
-    <!-- 其他 Docsify 插件 (通常在主 docsify 脚本之后) -->
-    <!--Java代码高亮-->
+    <!-- Other Docsify Plugins -->
     <script src="//unpkg.com/prismjs/components/prism-java.js"></script>
-    <!--全文搜索,直接用官方提供的无法生效-->
     <script src="https://cdn.bootcss.com/docsify/4.5.9/plugins/search.min.js"></script>
-    <!--谷歌统计
-    <script src="//unpkg.com/docsify" data-ga="UA-138586553-1"></script>
-    <script src="//unpkg.com/docsify/lib/plugins/ga.js"></script>
-    -->
-    <!-- 复制到剪贴板 -->
     <script src="//unpkg.com/docsify-copy-code"></script>
-    <!-- 图片缩放 -->
     <script src="//unpkg.com/docsify/lib/plugins/zoom-image.js"></script>
-    <!-- 表情 -->
     <script src="//unpkg.com/docsify/lib/plugins/emoji.js"></script>
-    <!-- 字数统计 -->
     <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
-    <!-- 备案 -->
     <script src="https://cdn.jsdelivr.net/npm/docsify-beian@latest/dist/beian.min.js"></script>
-
-    <!-- 如果你需要 MathJax，请在此处或 <head> 中引入 -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script> -->
 
   </body>
 </html>
