@@ -11,6 +11,46 @@
     />
     <!--主题-->
     <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css" />
+    <!-- 你也可以在这里添加自定义 CSS 来控制侧边栏折叠样式，或者使用 JS 动态添加 (如下面的插件所示) -->
+    <style>
+      /* CSS for Collapsible Sidebar */
+      /* Hide nested lists by default */
+      .sidebar .sidebar-nav ul {
+          display: none;
+      }
+      /* Show nested lists when the parent LI has the 'expanded' class */
+      .sidebar .sidebar-nav li.collapsible.expanded > ul {
+          display: block;
+      }
+      /* Optional: Style for collapsible items/links */
+      .sidebar .sidebar-nav li.collapsible > a {
+           /* Needed if you add content like arrows */
+           position: relative; /* Allow positioning of pseudo-elements */
+           padding-right: 20px; /* Make space for the indicator */
+           cursor: pointer; /* Indicate it's clickable */
+      }
+      /* Optional: Add expand/collapse indicator (right arrow for collapsed, down arrow for expanded) */
+       .sidebar .sidebar-nav li.collapsible > a::before {
+           content: '►'; /* Right arrow when collapsed */
+           position: absolute;
+           right: 5px; /* Position relative to the link */
+           top: 50%;
+           transform: translateY(-50%);
+           font-size: 0.8em;
+           transition: transform 0.2s ease-in-out; /* Smooth transition for indicator */
+       }
+        .sidebar .sidebar-nav li.collapsible.expanded > a::before {
+           content: '▼'; /* Down arrow when expanded */
+           transform: translateY(-50%) rotate(0deg); /* No rotation needed for down arrow */
+        }
+        /* Ensure padding is consistent if some links don't have indicators */
+         .sidebar .sidebar-nav a {
+             padding-right: 10px; /* Base padding for all links */
+         }
+         .sidebar .sidebar-nav li.collapsible > a {
+            padding-right: 20px; /* Override for collapsible links */
+         }
+    </style>
   </head>
 
   <body>
@@ -68,57 +108,96 @@
 
         // =========== Plugins Configuration ===========
         plugins: [
-          // Existing EditOnGithubPlugin
+          // 1. Existing EditOnGithubPlugin
           EditOnGithubPlugin.create(
             "https://github.com/Snailclimb/JavaGuide/blob/master/"
           ),
 
-          // --- Plugin for Image Hotlink Protection (from previous request) ---
+          // 3. New Plugin to Add referrerpolicy="no-referrer" and Implement Collapsible Sidebar
           function (hook) {
-            const targetOrigin = 'https://oss.javaguide.cn/';
-            const antiHotlinkParamKeyVal = 'x-oss-process=style/javaguide'; // <-- Adjust this parameter as needed
-
+            // This part adds referrerpolicy="no-referrer" to all img tags
             hook.afterEach(function (html, next) {
-              const imgRegex = new RegExp(`<img[^>]*src="(https?:\\/\\/oss\\.javaguide\\.cn\\/[^"]*)"[^>]*>`, 'gi');
-
-              let modifiedHtml = html.replace(imgRegex, function(match, srcUrl) {
-                if (srcUrl.includes(antiHotlinkParamKeyVal)) {
-                  return match;
-                }
-                const separator = srcUrl.includes('?') ? '&' : '?';
-                const newSrcUrl = srcUrl + separator + antiHotlinkParamKeyVal;
-                return match.replace(srcUrl, newSrcUrl);
-              });
-              // Note: This plugin now adds referrerpolicy as well. You could combine
-              // the logic here, or keep it separate in the next plugin.
-              // Keeping it separate for clarity in demonstrating the new requirement.
-
-              next(modifiedHtml);
-            });
-          },
-          // --- End Plugin for Image Hotlink Protection ---
-
-
-          // --- New Plugin to Add referrerpolicy="no-referrer" to ALL Images ---
-          function (hook) {
-            hook.afterEach(function (html, next) {
-              // Regex to find all img tags globally and case-insensitively
               const imgTagRegex = /<img[^>]*>/gi;
               let modifiedHtml = html.replace(imgTagRegex, function(match) {
-                // Check if referrerpolicy attribute is already present (case-insensitive)
                 if (match.toLowerCase().includes('referrerpolicy=')) {
-                  return match; // Attribute already exists, return original match
+                  return match;
                 }
-                // Add the attribute right before the closing '>'
-                // This replaces the last '>' with the attribute and '>'
                 return match.replace(/>$/, ' referrerpolicy="no-referrer">');
               });
-
               next(modifiedHtml);
             });
-          }
-          // --- End New Plugin ---
 
+            // This part implements the collapsible sidebar logic
+            // Use doneEach or ready hook to ensure sidebar DOM is available
+            hook.doneEach(function() { // Or hook.ready(function() { ... });
+              const sidebar = document.querySelector('.sidebar');
+              if (!sidebar) return; // Exit if sidebar element is not found
+
+              // Find all LIs that contain a direct child UL (these are the parent items with nested menus)
+              // Use querySelector(':scope > ul') for checking direct children.
+              // Fallback for older browsers that don't support :scope (though uncommon now)
+              const allLIs = sidebar.querySelectorAll('.sidebar-nav li');
+              const collapsibleItems = [];
+               allLIs.forEach(li => {
+                   // Check if this LI contains a UL as a direct child
+                   if (li.querySelector(':scope > ul')) {
+                       collapsibleItems.push(li);
+                   }
+               });
+
+              // Process each potential collapsible item
+              collapsibleItems.forEach(li => {
+                li.classList.add('collapsible'); // Mark it with a class
+
+                // Find the direct link within this collapsible LI
+                const link = li.querySelector(':scope > a'); // Direct child link
+                if (link) {
+                    // Add click listener to the link
+                    link.addEventListener('click', function(event) {
+                        // Toggle the 'expanded' class on the parent LI (li is available via closure)
+                        li.classList.toggle('expanded');
+
+                        // --- IMPORTANT ---
+                        // Decide if clicking this link should *also* navigate to the page it links to.
+                        // - If this link represents a *category* title that doesn't have its own page,
+                        //   and clicking it should *only* toggle the submenu:
+                        //   event.preventDefault();
+                        // - If this link represents a *page* (e.g., an index page for the category),
+                        //   and clicking it should *both* toggle the submenu *and* navigate:
+                        //   Remove event.preventDefault(); // (Current state in the code)
+                        // --- End IMPORTANT ---
+
+                        // event.preventDefault(); // Uncomment this line if clicking should only toggle collapse
+
+                        // Stop event from bubbling up, preventing potential interference
+                        event.stopPropagation();
+                    });
+                }
+                 // Note: Adding click listener to the LI itself might be another approach,
+                 // but clicking the link within the LI is usually the intended interaction point.
+                 // Adding it to the link also allows using the link's default behavior if needed.
+              });
+
+              // --- Handle initial expansion of the active path ---
+              // Find the currently active link in the sidebar
+              const activeLink = sidebar.querySelector('.sidebar-nav .active');
+              if (activeLink) {
+                  // Start from the LI containing the active link
+                  let currentElement = activeLink.parentElement;
+                  // Traverse up the DOM tree towards the sidebar root
+                  while (currentElement && currentElement !== sidebar) {
+                       // If the current element is an LI AND it has the 'collapsible' class
+                      if (currentElement.tagName === 'LI' && currentElement.classList.contains('collapsible')) {
+                          currentElement.classList.add('expanded'); // Expand this parent collapsible LI
+                      }
+                      // Move up to the next parent element
+                      currentElement = currentElement.parentElement;
+                  }
+              }
+              // --- End initial expansion logic ---
+            });
+          }
+          // --- End Collapsible Sidebar Plugin ---
         ],
         // ===========================================
       };
