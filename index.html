@@ -11,52 +11,13 @@
     />
     <!--主题-->
     <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css" />
-    <!-- CSS for Collapsible Sidebar -->
-    <style>
-      .sidebar .sidebar-nav ul {
-          display: none;
-      }
-      .sidebar .sidebar-nav li.collapsible.expanded > ul {
-          display: block;
-      }
-      .sidebar .sidebar-nav li.collapsible > a {
-           position: relative;
-           padding-right: 20px;
-           cursor: pointer;
-      }
-       .sidebar .sidebar-nav li.collapsible > a::before {
-           content: '►';
-           position: absolute;
-           right: 5px;
-           top: 50%;
-           transform: translateY(-50%);
-           font-size: 0.8em;
-           transition: transform 0.2s ease-in-out;
-       }
-        .sidebar .sidebar-nav li.collapsible.expanded > a::before {
-           content: '▼';
-           transform: translateY(-50%) rotate(0deg);
-        }
-         .sidebar .sidebar-nav a {
-             padding-right: 10px;
-         }
-         .sidebar .sidebar-nav li.collapsible > a {
-            padding-right: 20px;
-         }
-    </style>
   </head>
 
   <body>
-    <nav>
-      <a href="hhttps://javaguide.cn/zhuanlan/java-mian-shi-zhi-bei.html"
-      >Java面试指北</a>
-      <a href="https://javaguide.cn/about-the-author/zhishixingqiu-two-years.html"
-        >知识星球</a
-      >
-    </nav>
+   
     <div id="app"></div>
 
-    <!-- docsify-edit-on-github -->
+    <!-- docsify-edit-on-github (需要放在 docsify 脚本之前，因为它修改的是 $docsify 配置) -->
     <script src="//unpkg.com/docsify-edit-on-github/index.js"></script>
 
     <script>
@@ -68,26 +29,21 @@
       window.$docsify = {
         name: "JavaGuide",
         repo: "https://github.com/Snailclimb/JavaGuide",
-        maxLevel: 4,
+        maxLevel: 4, //最大支持渲染的标题层级
+        //封面,_coverpage.md
         //coverpage: true,
-        auto2top: true,
+        auto2top: true, //切换页面后是否自动跳转到页面顶部
         //ga: 'UA-138586553-1',
         //logo: 'https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-3logo-透明.png' ,
         search: {
-          //maxAge: 86400000,
+          //maxAge: 86400000, // 过期时间，单位毫秒，默认一天
           paths: "auto",
           placeholder: "搜索",
           noData: "找不到结果",
+          // 搜索标题的最大程级, 1 - 6
           depth: 3,
         },
-        beian: {
-          ICP: "鄂ICP备2020015769号",
-          NISMSP: {
-            number: "",
-            url: "",
-            id: "",
-          },
-        },
+        // 字数统计
         count: {
           countable: true,
           fontsize: "0.9em",
@@ -95,118 +51,49 @@
           language: "chinese",
         },
 
+        // =========== Plugins Configuration ===========
         plugins: [
-          EditOnGithubPlugin.create(
-            "https://github.com/Snailclimb/JavaGuide/blob/master/"
-          ),
-
+          // --- New Plugin to Add referrerpolicy="no-referrer" to ALL Images ---
           function (hook) {
-            const targetOrigin = 'https://oss.javaguide.cn/';
-            const antiHotlinkParamKeyVal = 'x-oss-process=style/javaguide';
-
             hook.afterEach(function (html, next) {
-              const imgRegex = new RegExp(`<img[^>]*src="(https?:\\/\\/oss\\.javaguide\\.cn\\/[^"]*)"[^>]*>`, 'gi');
-              let modifiedHtml = html.replace(imgRegex, function(match, srcUrl) {
-                if (srcUrl.includes(antiHotlinkParamKeyVal)) {
-                  return match;
-                }
-                const separator = srcUrl.includes('?') ? '&' : '?';
-                const newSrcUrl = srcUrl + separator + antiHotlinkParamKeyVal;
-                return match.replace(srcUrl, newSrcUrl);
-              });
-              next(modifiedHtml);
-            });
-          },
-
-          // --- Corrected Plugin to Add referrerpolicy and Implement Collapsible Sidebar ---
-          function (hook) {
-            // Add referrerpolicy="no-referrer"
-            hook.afterEach(function (html, next) {
+              // Regex to find all img tags globally and case-insensitively
               const imgTagRegex = /<img[^>]*>/gi;
               let modifiedHtml = html.replace(imgTagRegex, function(match) {
+                // Check if referrerpolicy attribute is already present (case-insensitive)
                 if (match.toLowerCase().includes('referrerpolicy=')) {
-                  return match;
+                  return match; // Attribute already exists, return original match
                 }
+                // Add the attribute right before the closing '>'
+                // This replaces the last '>' with the attribute and '>'
                 return match.replace(/>$/, ' referrerpolicy="no-referrer">');
               });
+
               next(modifiedHtml);
             });
-
-            // Implement collapsible sidebar logic
-            hook.doneEach(function() {
-              const sidebar = document.querySelector('.sidebar');
-              if (!sidebar) return;
-
-              const allLIs = sidebar.querySelectorAll('.sidebar-nav li');
-              const collapsibleItems = [];
-
-              allLIs.forEach(li => {
-                   if (li.querySelector(':scope > ul')) {
-                       collapsibleItems.push(li);
-                   }
-              });
-
-              collapsibleItems.forEach(li => {
-                li.classList.add('collapsible');
-                const link = li.querySelector(':scope > a'); // Find the direct child link
-
-                // *** FIX: Check if the link element exists before adding event listener ***
-                if (link) {
-                    link.addEventListener('click', function(event) {
-                        // Toggle the 'expanded' class on the parent LI
-                        li.classList.toggle('expanded');
-
-                        // Uncomment the line below if clicking should ONLY toggle and NOT navigate
-                        // event.preventDefault();
-
-                        event.stopPropagation(); // Prevent parent listeners (if any) from firing
-                    });
-                } else {
-                     // Optional: Log a warning if a collapsible LI has no direct link
-                     // This might indicate an issue with your _sidebar.md structure
-                     console.warn("Collapsible LI found without a direct child link:", li);
-                     // You might want to add a click listener to the LI itself here as a fallback
-                     li.addEventListener('click', function(event) {
-                          li.classList.toggle('expanded');
-                           // Check if click target is not a link within this LI
-                           if (!event.target.closest('a')) {
-                              event.preventDefault(); // Prevent default if not clicking a link further down
-                           }
-                          event.stopPropagation();
-                     });
-                }
-                // --- End FIX ---
-              });
-
-              // Handle initial expansion of the active path
-              const activeLink = sidebar.querySelector('.sidebar-nav .active');
-              if (activeLink) {
-                  let currentElement = activeLink.parentElement;
-                  while (currentElement && currentElement !== sidebar) {
-                      if (currentElement.tagName === 'LI' && currentElement.classList.contains('collapsible')) {
-                          currentElement.classList.add('expanded');
-                      }
-                      currentElement = currentElement.parentElement;
-                  }
-              }
-            });
           }
-          // --- End Corrected Plugin ---
+          // --- End New Plugin ---
+
         ],
+        // ===========================================
       };
     </script>
 
-    <!-- Main Docsify script -->
+    <!-- Main Docsify script (必须在配置脚本之后) -->
     <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
 
-    <!-- Other Docsify Plugins -->
+    <!-- 其他 Docsify 插件 (通常在主 docsify 脚本之后) -->
+    <!--Java代码高亮-->
     <script src="//unpkg.com/prismjs/components/prism-java.js"></script>
+    <!--全文搜索,直接用官方提供的无法生效-->
     <script src="https://cdn.bootcss.com/docsify/4.5.9/plugins/search.min.js"></script>
+    -->
+    <!-- 复制到剪贴板 -->
     <script src="//unpkg.com/docsify-copy-code"></script>
+    <!-- 图片缩放 -->
     <script src="//unpkg.com/docsify/lib/plugins/zoom-image.js"></script>
+    <!-- 表情 -->
     <script src="//unpkg.com/docsify/lib/plugins/emoji.js"></script>
+    <!-- 字数统计 -->
     <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/docsify-beian@latest/dist/beian.min.js"></script>
-
   </body>
 </html>
