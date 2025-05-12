@@ -1,37 +1,154 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <title>Docsify 最小化测试</title>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>JavaGuide</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/docsify/lib/themes/vue.css">
-</head>
-<body>
-    <div id="docsify-app-container">页面正在努力加载中...</div> <!-- 修改了ID并添加了初始文本 -->
+    <meta name="description" content="Description" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <!--主题-->
+    <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css" />
+  </head>
+
+  <body>
+    <nav>
+      <a href="hhttps://javaguide.cn/zhuanlan/java-mian-shi-zhi-bei.html"
+      >Java面试指北</a>
+      <a href="https://javaguide.cn/about-the-author/zhishixingqiu-two-years.html"
+        >知识星球</a
+      >
+    </nav>
+    <div id="app"></div>
+
+    <!-- docsify-edit-on-github (需要放在 docsify 脚本之前，因为它修改的是 $docsify 配置) -->
+    <script src="//unpkg.com/docsify-edit-on-github/index.js"></script>
 
     <script>
-        console.log('[MINIMAL TEST A] window.$docsify 配置脚本块开始执行。');
+      // 离线支持
+      if (typeof navigator.serviceWorker !== "undefined") {
+        navigator.serviceWorker.register("sw.js");
+      }
 
-        window.$docsify = {
-            el: '#docsify-app-container', // 显式指定挂载元素
-            name: '最小化测试文档 A',
-            // homepage: 'README.md', // 可以显式指定首页文件，如果你的文件不叫 README.md
-            doneEach: function(html, next) {
-                console.log('[MINIMAL TEST A] doneEach 钩子成功触发！ HTML content received.');
-                // 为了确认是否真的有内容被处理，可以打印一下html的开头部分
-                // console.log('[MINIMAL TEST A] HTML snippet:', String(html).substring(0, 100));
-                next(html);
-            },
-            // 新增一个 ready 钩子，看它是否会触发
-            ready: function() {
-                console.log('[MINIMAL TEST A] Docsify "ready" 钩子触发！');
-            }
-        };
+      window.$docsify = {
+        name: "JavaGuide",
+        repo: "https://github.com/Snailclimb/JavaGuide",
+        maxLevel: 4, //最大支持渲染的标题层级
+        //封面,_coverpage.md
+        //coverpage: true,
+        auto2top: true, //切换页面后是否自动跳转到页面顶部
+        //ga: 'UA-138586553-1',
+        //logo: 'https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-3logo-透明.png' ,
+        search: {
+          //maxAge: 86400000, // 过期时间，单位毫秒，默认一天
+          paths: "auto",
+          placeholder: "搜索",
+          noData: "找不到结果",
+          // 搜索标题的最大程级, 1 - 6
+          depth: 3,
+        },
+        // 备案
+        beian: {
+          ICP: "鄂ICP备2020015769号",
+          NISMSP: {
+            number: "",
+            url: "",
+            id: "",
+          },
+        },
+        // 字数统计
+        count: {
+          countable: true,
+          fontsize: "0.9em",
+          color: "rgb(90,90,90)",
+          language: "chinese",
+        },
 
-        console.log('[MINIMAL TEST A] window.$docsify 对象已定义完毕:', window.$docsify);
+        // =========== Plugins Configuration ===========
+        plugins: [
+          // Existing EditOnGithubPlugin
+          EditOnGithubPlugin.create(
+            "https://github.com/Snailclimb/JavaGuide/blob/master/"
+          ),
+
+          // --- Plugin for Image Hotlink Protection (from previous request) ---
+          function (hook) {
+            const targetOrigin = 'https://oss.javaguide.cn/';
+            const antiHotlinkParamKeyVal = 'x-oss-process=style/javaguide'; // <-- Adjust this parameter as needed
+
+            hook.afterEach(function (html, next) {
+              const imgRegex = new RegExp(`<img[^>]*src="(https?:\\/\\/oss\\.javaguide\\.cn\\/[^"]*)"[^>]*>`, 'gi');
+
+              let modifiedHtml = html.replace(imgRegex, function(match, srcUrl) {
+                if (srcUrl.includes(antiHotlinkParamKeyVal)) {
+                  return match;
+                }
+                const separator = srcUrl.includes('?') ? '&' : '?';
+                const newSrcUrl = srcUrl + separator + antiHotlinkParamKeyVal;
+                return match.replace(srcUrl, newSrcUrl);
+              });
+              // Note: This plugin now adds referrerpolicy as well. You could combine
+              // the logic here, or keep it separate in the next plugin.
+              // Keeping it separate for clarity in demonstrating the new requirement.
+
+              next(modifiedHtml);
+            });
+          },
+          // --- End Plugin for Image Hotlink Protection ---
+
+
+          // --- New Plugin to Add referrerpolicy="no-referrer" to ALL Images ---
+          function (hook) {
+            hook.afterEach(function (html, next) {
+              // Regex to find all img tags globally and case-insensitively
+              const imgTagRegex = /<img[^>]*>/gi;
+              let modifiedHtml = html.replace(imgTagRegex, function(match) {
+                // Check if referrerpolicy attribute is already present (case-insensitive)
+                if (match.toLowerCase().includes('referrerpolicy=')) {
+                  return match; // Attribute already exists, return original match
+                }
+                // Add the attribute right before the closing '>'
+                // This replaces the last '>' with the attribute and '>'
+                return match.replace(/>$/, ' referrerpolicy="no-referrer">');
+              });
+
+              next(modifiedHtml);
+            });
+          }
+          // --- End New Plugin ---
+
+        ],
+        // ===========================================
+      };
     </script>
 
-    <script src="https://unpkg.com/docsify/lib/docsify.min.js"></script>
-</body>
+    <!-- Main Docsify script (必须在配置脚本之后) -->
+    <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
+
+    <!-- 其他 Docsify 插件 (通常在主 docsify 脚本之后) -->
+    <!--Java代码高亮-->
+    <script src="//unpkg.com/prismjs/components/prism-java.js"></script>
+    <!--全文搜索,直接用官方提供的无法生效-->
+    <script src="https://cdn.bootcss.com/docsify/4.5.9/plugins/search.min.js"></script>
+    <!--谷歌统计
+    <script src="//unpkg.com/docsify" data-ga="UA-138586553-1"></script>
+    <script src="//unpkg.com/docsify/lib/plugins/ga.js"></script>
+    -->
+    <!-- 复制到剪贴板 -->
+    <script src="//unpkg.com/docsify-copy-code"></script>
+    <!-- 图片缩放 -->
+    <script src="//unpkg.com/docsify/lib/plugins/zoom-image.js"></script>
+    <!-- 表情 -->
+    <script src="//unpkg.com/docsify/lib/plugins/emoji.js"></script>
+    <!-- 字数统计 -->
+    <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
+    <!-- 备案 -->
+    <script src="https://cdn.jsdelivr.net/npm/docsify-beian@latest/dist/beian.min.js"></script>
+
+    <!-- 如果你需要 MathJax，请在此处或 <head> 中引入 -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script> -->
+
+  </body>
 </html>
